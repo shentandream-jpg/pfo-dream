@@ -1,0 +1,3 @@
+# Cloudflare Pages: 把 /pfo-dream/ 前缀的资源请求重写到根路径
+# 这样 vite 构建出的 base=/pfo-dream/ 资源引用在根域名部署下也能正确加载
+/pfo-dream/* /:splat 200
