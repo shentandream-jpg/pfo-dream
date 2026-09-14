@@ -237,6 +237,34 @@ img,video,svg{max-width:100%}
 .fold-text-trailing{display:inline-flex;align-self:center;align-items:center;margin-left:.42em}
 .fold-text-trailing .cover-cta-arrow{height:1.32em}
 .fold-text-trailing .fold-text-piece::after{display:none}
+
+/* Multi-project groups become an editorial horizontal accordion on desktop. */
+.project-rail-title{display:none}
+@media(min-width:768px){
+  .project-grid.project-horizontal{display:flex;align-items:stretch;gap:14px;min-height:clamp(470px,46vw,660px)}
+  .project-horizontal .project-card{position:relative;flex:1 1 0;width:auto;overflow:hidden;border-radius:8px;background:#f1eae8;transition:flex .7s cubic-bezier(.2,.75,.2,1),filter .45s ease,opacity .45s ease}
+  .project-horizontal .project-card.is-featured{flex:6 1 0}
+  .project-horizontal:has(.project-card:hover) .project-card,.project-horizontal:has(.project-card:focus-visible) .project-card{flex:1 1 0;filter:saturate(.35);opacity:.72}
+  .project-horizontal:has(.project-card:hover) .project-card:hover,.project-horizontal:has(.project-card:focus-visible) .project-card:focus-visible{flex:6 1 0;filter:none;opacity:1}
+  .project-horizontal .project-image{position:absolute;inset:0;height:100%;aspect-ratio:auto;border-radius:8px}
+  .project-horizontal .project-image::after{content:'';position:absolute;inset:42% 0 0;background:linear-gradient(transparent,#20181a99);opacity:.8;transition:opacity .35s}
+  .project-horizontal .project-image img{height:100%;object-fit:cover}
+  .project-horizontal .project-open{z-index:3}
+  .project-horizontal .project-card-copy{position:absolute;z-index:2;left:28px;right:28px;bottom:26px;color:#fff;text-shadow:0 1px 10px #24171966;opacity:0;transform:translateY(14px);transition:opacity .35s ease .18s,transform .45s ease .18s;pointer-events:none}
+  .project-horizontal .project-card.is-featured .project-card-copy{opacity:1;transform:none}
+  .project-horizontal:has(.project-card:hover) .project-card .project-card-copy,.project-horizontal:has(.project-card:focus-visible) .project-card .project-card-copy{opacity:0;transform:translateY(14px)}
+  .project-horizontal:has(.project-card:hover) .project-card:hover .project-card-copy,.project-horizontal:has(.project-card:focus-visible) .project-card:focus-visible .project-card-copy{opacity:1;transform:none}
+  .project-horizontal .project-meta,.project-horizontal .project-subtitle{color:#fff}
+  .project-horizontal .tags span{color:#fff;border-color:#ffffff66;background:#ffffff12}
+  .project-horizontal .project-rail-title{display:block;position:absolute;z-index:2;left:50%;bottom:30px;max-height:70%;writing-mode:vertical-rl;transform:translateX(-50%);color:#fff;font-size:18px;letter-spacing:2px;text-shadow:0 2px 12px #000;opacity:1;transition:opacity .25s}
+  .project-horizontal .project-card.is-featured .project-rail-title{opacity:0}
+  .project-horizontal:has(.project-card:hover) .project-card:hover .project-rail-title,.project-horizontal:has(.project-card:focus-visible) .project-card:focus-visible .project-rail-title{opacity:0}
+}
+@media(max-width:767px){
+  .project-grid.project-horizontal{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:thin;padding:0 20px 18px;margin-inline:-20px}
+  .project-horizontal .project-card{flex:0 0 auto;width:min(84vw,390px);scroll-snap-align:center}
+  .project-horizontal .project-card-copy{display:block}
+}
 /* Cover caption (outside .animated-cover): same entrance, matched via :has(). */
 .cover-caption>span{transition:opacity .7s ease .6s,transform .8s cubic-bezier(.18,.8,.25,1) .6s}
 .portfolio-hero:has(.animated-cover:not(.is-visible)) .cover-caption>span{opacity:0;transform:translateY(24px)}
