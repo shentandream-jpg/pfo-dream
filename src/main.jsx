@@ -4,6 +4,7 @@ import './portfolio.css';
 
 import { projects } from './projects';
 import FoldText from './FoldText';
+import CursorParticles from './CursorParticles';
 
 const advantages = [
   ['04','从洞察开始','RESEARCH','把用户感受变成设计依据。结合问卷、实地观察与数据分析，理解场景中的真实需求。','用户研究 / Excel / SPSS / GIS'],
@@ -123,6 +124,7 @@ function App(){
   function close(){dialog.current.close();setProject(null);lastTrigger.current?.focus();}
   async function copy(text,ok,fallback){try{await navigator.clipboard.writeText(text);setNotice(ok);}catch{setNotice(fallback);}}
   return <>
+    <CursorParticles/>
     <header className="header"><a className="brand" href="#home" aria-label="沈谭梦 首页"><img className="brand-mark" src={import.meta.env.BASE_URL+'images/dream-logo.svg'} alt="" width="875" height="225"/><span>沈谭梦<small>DESIGN PORTFOLIO</small></span></a><button className="menu-toggle" onClick={()=>setMenu(!menu)} aria-expanded={menu} aria-controls="main-navigation" aria-label={menu?'关闭导航菜单':'打开导航菜单'}><span className="menu-toggle-label">MENU</span><span className="hamburger" aria-hidden="true"><i/><i/><i/></span></button><nav id="main-navigation" className={menu?'nav open':'nav'} aria-label="主导航">{[['about','关于我'],['group-media','新媒体运营'],['group-visual','视觉设计'],['group-space','空间设计'],['group-service','服务设计'],['group-product','产品设计']].map(([id,text])=><a href={'#'+id} key={id+text} onClick={()=>setMenu(false)}>{text}</a>)}<a className="nav-mobile-contact" href="#contact" onClick={()=>setMenu(false)}>联系我 <Arrow/></a></nav><a className="contact-nav" href="#contact">联系我 <Arrow/></a></header>
     <main>
       <section className="portfolio-hero" id="home" aria-labelledby="site-title">
