@@ -241,6 +241,7 @@ img,video,svg{max-width:100%}
 /* Multi-project groups become an editorial horizontal accordion on desktop. */
 .project-rail-title{display:none}
 @media(min-width:768px){
+  .project-grid:not(.project-horizontal){grid-template-columns:minmax(0,67%)}
   .project-grid.project-horizontal{display:flex;align-items:stretch;gap:14px;min-height:clamp(470px,46vw,660px)}
   .project-horizontal .project-card{position:relative;flex:1 1 0;width:auto;overflow:hidden;border-radius:8px;background:#f1eae8;transition:flex .7s cubic-bezier(.2,.75,.2,1),filter .45s ease,opacity .45s ease}
   .project-horizontal .project-card.is-featured{flex:6 1 0}
@@ -264,6 +265,8 @@ img,video,svg{max-width:100%}
   .project-grid.project-horizontal{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:thin;padding:0 20px 18px;margin-inline:-20px}
   .project-horizontal .project-card{flex:0 0 auto;width:min(84vw,390px);scroll-snap-align:center}
   .project-horizontal .project-card-copy{display:block}
+  .project-grid:not(.project-horizontal){display:flex}
+  .project-grid:not(.project-horizontal) .project-card{flex:0 0 auto;width:min(84vw,390px)}
 }
 /* Cover caption (outside .animated-cover): same entrance, matched via :has(). */
 .cover-caption>span{transition:opacity .7s ease .6s,transform .8s cubic-bezier(.18,.8,.25,1) .6s}
