@@ -234,6 +234,9 @@ img,video,svg{max-width:100%}
 .cover-cta{opacity:0;transform:translateX(55px);transition:opacity .65s ease .95s,transform .85s cubic-bezier(.18,.8,.25,1) .95s,color .25s}
 .animated-cover.is-visible .cover-cta{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){.cover-cta{transform:none!important;opacity:1!important}}
+.fold-text-trailing{display:inline-flex;align-self:center;align-items:center;margin-left:.42em}
+.fold-text-trailing .cover-cta-arrow{height:1.32em}
+.fold-text-trailing .fold-text-piece::after{display:none}
 /* Cover caption (outside .animated-cover): same entrance, matched via :has(). */
 .cover-caption>span{transition:opacity .7s ease .6s,transform .8s cubic-bezier(.18,.8,.25,1) .6s}
 .portfolio-hero:has(.animated-cover:not(.is-visible)) .cover-caption>span{opacity:0;transform:translateY(24px)}

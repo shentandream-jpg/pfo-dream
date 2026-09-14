@@ -19,6 +19,7 @@ export default function FoldText({
   creaseShading = 0.48,
   repeatDelay = 1.15,
   className = '',
+  trailing = null,
 }) {
   const rootRef = useRef(null);
   const hingeConfig = HINGES[hinge] || HINGES.top;
@@ -80,6 +81,20 @@ export default function FoldText({
             </span>
           </span>
         ))}
+        {trailing && (
+          <span
+            className="fold-text-segment fold-text-trailing"
+            style={{ '--fold-perspective': `${Math.max(120, perspective)}px` }}
+          >
+            <span
+              className="fold-text-piece"
+              data-fold-hinge={hinge}
+              style={{ transformOrigin: hingeConfig.origin, '--fold-crease': 0 }}
+            >
+              {trailing}
+            </span>
+          </span>
+        )}
       </span>
     </span>
   );
