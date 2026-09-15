@@ -75,7 +75,7 @@ function MediaBook({project}){
     <div className="book-stage">
       <button className="book-hit" onClick={()=>setFlipped(f=>Math.max(0,f-1))} disabled={flipped===0} aria-label="上一页">‹</button>
       <div className="book">
-        <div className="book-base" aria-hidden="true"/>
+        <div className="book-base" aria-hidden="true"><img src={project.pages[0].src} alt=""/></div>
         {project.pages.map((page,i)=>
           <div className={'book-leaf'+(i<flipped?' is-flipped':'')} key={page.number} style={{zIndex:i<flipped?total+i+1:total-i}}>
             <div className="book-face"><img src={page.src} alt={project.name+'：'+page.caption} loading={i?'lazy':'eager'}/></div>
