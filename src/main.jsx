@@ -16,8 +16,7 @@ const GROUPS = [
   ['group-media','新媒体运营','NEW MEDIA OPERATIONS',['01']],
   ['group-visual','视觉设计','VISUAL DESIGN',['02','03']],
   ['group-space','空间设计','SPACE DESIGN',['04','05','06','07']],
-  ['group-service','服务设计','SERVICE DESIGN',['08']],
-  ['group-product','产品设计','PRODUCT DESIGN',['09']],
+  ['group-service','产品设计','PRODUCT DESIGN',['08','09']],
 ];
 const TOC_COLORS = ['#5E7FA3','#C98D90','#778D72','#DDA164','#4C514D'];
 function Arrow({diagonal=false}){return <span aria-hidden="true">{diagonal?'↗':'↗'}</span>}
@@ -62,6 +61,31 @@ function TypeBlock({as:Tag='span',lines,speed=50,started=false,onDone}){
       return <React.Fragment key={li}>{li>0&&<br/>}{chars}</React.Fragment>;
     })}
   </Tag>;
+}
+function MediaBook({project}){
+  const total=project.pages.length;
+  const ref=useRef(null);const [vis,setVis]=useState(false);const [flipped,setFlipped]=useState(0);
+  useEffect(()=>{
+    const node=ref.current;if(!node)return;
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){setVis(true);return;}
+    const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting){setVis(true);ob.disconnect();}},{threshold:.2});
+    ob.observe(node);return()=>ob.disconnect();
+  },[]);
+  return <div ref={ref} className={'media-book'+(vis?' is-visible':'')}>
+    <div className="book-stage">
+      <button className="book-hit" onClick={()=>setFlipped(f=>Math.max(0,f-1))} disabled={flipped===0} aria-label="上一页">‹</button>
+      <div className="book">
+        <div className="book-base" aria-hidden="true"/>
+        {project.pages.map((page,i)=>
+          <div className={'book-leaf'+(i<flipped?' is-flipped':'')} key={page.number} style={{zIndex:i<flipped?total+i+1:total-i}}>
+            <div className="book-face"><img src={page.src} alt={project.name+'：'+page.caption} loading={i?'lazy':'eager'}/></div>
+            <div className="book-face book-face-back" aria-hidden="true"><img src={page.src} alt="" loading="lazy"/></div>
+          </div>)}
+      </div>
+      <button className="book-hit" onClick={()=>setFlipped(f=>Math.min(total,f+1))} disabled={flipped===total} aria-label="下一页">›</button>
+    </div>
+    <div className="book-dots">{project.pages.map((_,i)=><button key={i} className={'book-dot'+(i===Math.min(flipped,total-1)?' is-active':'')} onClick={()=>setFlipped(i)} aria-label={'跳到第'+(i+1)+'页'}/>)}</div>
+  </div>
 }
 function App(){
   const [project,setProject]=useState(null); const [menu,setMenu]=useState(false); const [notice,setNotice]=useState(''); const [flipCount,setFlipCount]=useState(0);
@@ -113,7 +137,7 @@ function App(){
     return()=>{stopped=true;timers.forEach(clearTimeout);observer.disconnect();};
   },[]);
   const dialog=useRef(null); const lastTrigger=useRef(null);
-  useEffect(()=>{if(project){dialog.current.showModal();} },[project]);
+  useEffect(()=>{if(project){dialog.current.showModal();} if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches&&!window.matchMedia('(pointer: coarse)').matches){document.documentElement.classList.toggle('custom-cursor-active',!project);} },[project]);
   useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(''),2800);return()=>clearTimeout(timer);},[notice]);
   useEffect(()=>{
     const closeMenu=event=>{if(event.key==='Escape')setMenu(false)};
@@ -125,7 +149,7 @@ function App(){
   async function copy(text,ok,fallback){try{await navigator.clipboard.writeText(text);setNotice(ok);}catch{setNotice(fallback);}}
   return <>
     <CursorParticles/>
-    <header className="header"><a className="brand" href="#home" aria-label="沈谭梦 首页"><img className="brand-mark" src={import.meta.env.BASE_URL+'images/dream-logo.svg'} alt="" width="875" height="225"/><span>沈谭梦<small>DESIGN PORTFOLIO</small></span></a><button className="menu-toggle" onClick={()=>setMenu(!menu)} aria-expanded={menu} aria-controls="main-navigation" aria-label={menu?'关闭导航菜单':'打开导航菜单'}><span className="menu-toggle-label">MENU</span><span className="hamburger" aria-hidden="true"><i/><i/><i/></span></button><nav id="main-navigation" className={menu?'nav open':'nav'} aria-label="主导航">{[['about','关于我'],['group-media','新媒体运营'],['group-visual','视觉设计'],['group-space','空间设计'],['group-service','服务设计'],['group-product','产品设计']].map(([id,text])=><a href={'#'+id} key={id+text} onClick={()=>setMenu(false)}>{text}</a>)}<a className="nav-mobile-contact" href="#contact" onClick={()=>setMenu(false)}>联系我 <Arrow/></a></nav><a className="contact-nav" href="#contact">联系我 <Arrow/></a></header>
+    <header className="header"><a className="brand" href="#home" aria-label="沈谭梦 首页"><img className="brand-mark" src={import.meta.env.BASE_URL+'images/dream-logo.svg'} alt="" width="875" height="225"/><span>沈谭梦<small>DESIGN PORTFOLIO</small></span></a><button className="menu-toggle" onClick={()=>setMenu(!menu)} aria-expanded={menu} aria-controls="main-navigation" aria-label={menu?'关闭导航菜单':'打开导航菜单'}><span className="menu-toggle-label">MENU</span><span className="hamburger" aria-hidden="true"><i/><i/><i/></span></button><nav id="main-navigation" className={menu?'nav open':'nav'} aria-label="主导航">{[['about','关于我'],['group-media','新媒体运营'],['group-visual','视觉设计'],['group-space','空间设计'],['group-service','产品设计']].map(([id,text])=><a href={'#'+id} key={id+text} onClick={()=>setMenu(false)}>{text}</a>)}<a className="nav-mobile-contact" href="#contact" onClick={()=>setMenu(false)}>联系我 <Arrow/></a></nav><a className="contact-nav" href="#contact">联系我 <Arrow/></a></header>
     <main>
       <section className="portfolio-hero" id="home" aria-labelledby="site-title">
         <h1 id="site-title" className="sr-only">沈谭梦 · 个人设计作品集</h1>
@@ -133,8 +157,8 @@ function App(){
         <div className="cover-caption shell"><span>空间 · 产品 · 视觉 · 新媒体</span></div>
       </section>
       <section className={'about shell section'+(aboutVis?' is-visible':'')} ref={aboutSectionRef} id="about"><div className="section-label"><span>01 / ABOUT ME</span><span>ABOUT ME / 关于我</span></div><div className="about-grid about-text-only"><div className="about-copy" ref={aboutCopyRef}><span className="eyebrow muted">BEYOND A SINGLE DISCIPLINE</span><h2 aria-label="保持好奇，让想法落地。"><TypeBlock lines={['保持好奇，','让想法落地。']} speed={95} started={aboutGo} onDone={()=>setAboutT1(true)}/></h2><p className={'about-p'+(aboutT1?' on':'')} aria-label="你好，我是沈谭梦。目前就读于中南大学设计专业硕士，本科毕业于武汉理工大学设计学类。">你好，我是沈谭梦。<br/>目前就读于中南大学设计专业硕士，本科毕业于武汉理工大学设计学类。</p><p className={'about-p about-p-2'+(aboutT1?' on':'')} aria-label="我的实践横跨空间、产品、视觉与新媒体运营。从公共空间调研到智能产品建模，从影像制作到内容策划，我习惯以用户洞察为起点，将想法转化为可感知、可使用、可传播的体验。">我的实践横跨空间、产品、视觉与新媒体运营。从公共空间调研到智能产品建模，从影像制作到内容策划，我习惯以用户洞察为起点，将想法转化为可感知、可使用、可传播的体验。</p></div></div></section>
-      <section className="contents section" id="contents" aria-labelledby="contents-title"><div className="shell"><div className="section-label"><span>02 / CONTENTS</span><span>CONTENTS / 目录</span></div><div className="section-heading"><div><span className="editorial-title">Contents.</span><h2 id="contents-title">作品目录</h2></div></div><div className="toc-grid" ref={tocRef}>{GROUPS.map(([gid,gtitle,gen,ids],i)=>{const backProject=projects.find(p=>p.id===ids[0]);const backSrc=gid==='group-visual'?'/portfolio/video-03.jpg':backProject.image;return(<a className="toc-card" href={'#'+gid} key={gid} aria-label={gtitle}><span className={'toc-flip'+(i<flipCount?' is-flipped':'')}><span className="toc-face toc-front" style={{background:TOC_COLORS[i]}}><span className="toc-num">{String(i+1).padStart(2,'0')} /</span><strong className="toc-name">{gtitle}</strong><span className="toc-meta"><span className="toc-en">{gen}</span><span className="toc-count">{String(ids.length).padStart(2,'0')} PROJECTS <Arrow/></span></span></span><span className="toc-face toc-back" aria-hidden="true"><img className={gid==='group-product'?'toc-back-product':undefined} src={backSrc} alt=""/></span></span></a>)})}</div></div></section>
-      <section className="projects section" id="projects"><div className="shell"><div className="section-label"><span>03 / MY PROJECTS</span><span>空间、文化与人的连接。</span></div><div className="section-heading"><div><h2>作品项目</h2></div><p>从图像语言到空间叙事，<br/>从单一媒介到完整体验。</p></div><div className="project-groups">{GROUPS.map(([gid,gtitle,gen,ids])=>{const items=ids.map(id=>projects.find(p=>p.id===id)).filter(Boolean);const horizontal=items.length>1;return(<div className="project-group" id={gid} key={gid}><div className="group-head"><h3>{gtitle}<span className="accent">.</span></h3><span>{gen} / {String(items.length).padStart(2,'0')} PROJECTS</span></div><div className={'project-grid'+(horizontal?' project-horizontal':'')}>{items.map((p,index)=><button className={'project-card project-'+p.id+(horizontal&&index===0?' is-featured':'')} key={p.id} style={{'--project-color':p.color}} onClick={e=>{lastTrigger.current=e.currentTarget;setProject(p);}} aria-label={'查看'+p.name+'，共'+p.pages.length+'页'}><div className="project-image"><img src={p.image} alt={p.name+'作品效果图'} loading="lazy"/><span className="project-rail-title" aria-hidden="true">{p.name}</span><span className="project-open" aria-hidden="true">↗</span></div><div className="project-card-copy"><div className="project-meta"><span><i/> {p.id} / {p.category}</span><span>{String(p.pages.length).padStart(2,'0')} PAGES</span></div><div className="project-info"><h3>{p.name}</h3></div><p className="project-subtitle">{p.subtitle}</p><div className="tags">{p.tags.map(t=><span key={t}>{t}</span>)}</div></div></button>)}</div></div>)})}</div></div></section>
+      <section className="contents section" id="contents" aria-labelledby="contents-title"><div className="shell"><div className="section-label"><span>02 / CONTENTS</span><span>CONTENTS / 目录</span></div><div className="section-heading"><div><span className="editorial-title">Contents.</span><h2 id="contents-title">作品目录</h2></div></div><div className="toc-grid" ref={tocRef}>{GROUPS.map(([gid,gtitle,gen,ids],i)=>{const backProject=projects.find(p=>p.id===ids[0]);const backSrc=gid==='group-visual'?'/portfolio/video-03.jpg':backProject.image;return(<a className="toc-card" href={'#'+gid} key={gid} aria-label={gtitle}><span className={'toc-flip'+(i<flipCount?' is-flipped':'')}><span className="toc-face toc-front" style={{background:TOC_COLORS[i]}}><span className="toc-num">{String(i+1).padStart(2,'0')} /</span><strong className="toc-name">{gtitle}</strong><span className="toc-meta"><span className="toc-en">{gen}</span><span className="toc-count">{String(ids.length).padStart(2,'0')} PROJECTS <Arrow/></span></span></span><span className="toc-face toc-back" aria-hidden="true"><img src={backSrc} alt=""/></span></span></a>)})}</div></div></section>
+      <section className="projects section" id="projects"><div className="shell"><div className="section-label"><span>03 / MY PROJECTS</span><span>空间、文化与人的连接。</span></div><div className="section-heading"><div><h2>作品项目</h2></div><p>从图像语言到空间叙事，<br/>从单一媒介到完整体验。</p></div><div className="project-groups">{GROUPS.map(([gid,gtitle,gen,ids])=>{const items=ids.map(id=>projects.find(p=>p.id===id)).filter(Boolean);const horizontal=items.length>1;return(<div className="project-group" id={gid} key={gid}><div className="group-head"><h3>{gtitle}<span className="accent">.</span></h3><span>{gen} / {String(gid==='group-media'?items[0].pages.length:items.length).padStart(2,'0')} {gid==='group-media'?'CARDS':'PROJECTS'}</span></div>{gid==='group-media'?<MediaBook project={items[0]}/>:<div className={'project-grid'+(horizontal?' project-horizontal':'')}>{items.map((p,index)=><button className={'project-card project-'+p.id+(horizontal&&index===0?' is-featured':'')} key={p.id} style={{'--project-color':p.color}} onClick={e=>{lastTrigger.current=e.currentTarget;setProject(p);}} aria-label={'查看'+p.name+'，共'+p.pages.length+'页'}><div className="project-image"><img src={p.image} alt={p.name+'作品效果图'} loading="lazy"/><span className="project-rail-title" aria-hidden="true">{p.name}</span><span className="project-open" aria-hidden="true">↗</span></div><div className="project-card-copy"><div className="project-meta"><span><i/> {p.id} / {p.category}</span><span>{String(p.pages.length).padStart(2,'0')} PAGES</span></div><div className="project-info"><h3>{p.name}</h3></div><p className="project-subtitle">{p.subtitle}</p><div className="tags">{p.tags.map(t=><span key={t}>{t}</span>)}</div></div></button>)}</div>}</div>)})}</div></div></section>
       <section className="strengths shell section" id="strengths"><div className="section-label"><span>04 / MY APPROACH</span><span>能力相互连接，想法持续生长。</span></div><div className="section-heading"><h2>不止于视觉<span className="accent">.</span></h2><p>用研究理解问题，用设计回应需求，<br/>用内容建立连接。</p></div><div className="strength-grid">{advantages.map(([n,title,en,desc,tools])=><article className="strength-card" key={n}><div className="strength-top"><span>{n}</span><span className={'skill-symbol symbol-'+n} aria-hidden="true">{['◎','◇','↗','✳'][Number(n)-1]}</span></div><span className="eyebrow muted">{en}</span><h3>{title}</h3><p>{desc}</p><div className="tools">{tools}</div></article>)}</div><div className="awards"><span>RECOGNITION / 设计荣誉</span><p>包豪斯奖 · 一等奖 <i>/</i> 中国好创意 · 全国二等奖 <i>/</i> 华灿奖 · 全国优秀奖</p></div></section>
       <section className="contact portfolio-ending" id="contact" aria-label="感谢观看与联系方式"><div className="ending-stage"><CoverArtwork ending onCopy={()=>copy('491134402@qq.com','邮箱已复制','请复制邮箱：491134402@qq.com')} onCopyPhone={()=>copy('18571920830','号码已复制','请复制号码：185 7192 0830')}/></div><footer className="shell"><a href="#home">沈谭梦 / SHEN TANMENG</a><span>© {new Date().getFullYear()} · Personal Design Portfolio</span><a href="#home">回到顶部 ↑</a></footer></section>
     </main>
