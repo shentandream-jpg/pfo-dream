@@ -258,12 +258,12 @@ img,video,svg{max-width:100%}
 .media-book.is-visible .book-stage{opacity:1;transform:none;transition:opacity .6s ease,transform .7s cubic-bezier(.2,.75,.2,1)}
 @media(max-width:767px){
   .media-book{padding:22px 0 12px}
-  .book{flex:1 1 auto;aspect-ratio:1.59}
-  .book-base{display:none}
-  .book-leaf{left:0;width:100%}
-  .book-face{border-radius:5px}
-  .book-face img{object-fit:cover}
-  .book-face-back{display:none}
+  .book{flex:1 1 auto;max-width:360px;aspect-ratio:1.35;perspective:1800px}
+  .book-base{display:block}
+  .book-leaf{left:50%;width:50%}
+  .book-face{border-radius:0 5px 5px 0}
+  .book-face-back{display:block;border-radius:5px 0 0 5px}
+  .book-face img{object-fit:contain}
   .book-hit{width:40px;height:40px;margin:0 8px;font-size:18px}
 }
 
