@@ -299,11 +299,8 @@ img,video,svg{max-width:100%}
   .project-horizontal .project-rail-title{display:block;position:absolute;z-index:2;left:50%;bottom:30px;max-height:70%;writing-mode:vertical-rl;transform:translateX(-50%);color:#fff;font-size:18px;letter-spacing:2px;text-shadow:0 2px 12px #000;opacity:1;transition:opacity .25s}
   .project-horizontal .project-card.is-featured .project-rail-title{opacity:0}
   .project-horizontal:has(.project-card:hover) .project-card:hover .project-rail-title,.project-horizontal:has(.project-card:focus-visible) .project-card:focus-visible .project-rail-title{opacity:0}
-  /* Two-project groups use a balanced two-up composition instead of an accordion. */
-  .project-horizontal.project-two .project-card,.project-horizontal.project-two .project-card.is-featured{flex:1 1 0;filter:none;opacity:1}
-  .project-horizontal.project-two:has(.project-card:hover) .project-card,.project-horizontal.project-two:has(.project-card:focus-visible) .project-card{flex:1 1 0;filter:none;opacity:1}
-  .project-horizontal.project-two .project-card-copy,.project-horizontal.project-two .project-card.is-featured .project-card-copy{opacity:1;transform:none}
-  .project-horizontal.project-two .project-rail-title{display:none}
+  /* Two-project groups begin balanced, then become an accordion on hover or keyboard focus. */
+  .project-horizontal.project-two .project-card{flex:1 1 0;filter:none;opacity:1}
 }
 @media(max-width:767px){
   /* 手机端：项目分组保持单列竖排，卡片完整展示，页面竖向滑动浏览多个项目 */
