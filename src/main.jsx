@@ -64,7 +64,7 @@ function TypeBlock({as:Tag='span',lines,speed=50,started=false,onDone}){
 }
 function MediaBook({project}){
   const total=project.pages.length;
-  const ref=useRef(null);const timer=useRef(null);
+  const ref=useRef(null);
   const [vis,setVis]=useState(false);const [cur,setCur]=useState(0);const [anim,setAnim]=useState(null);
   const busy=anim!=null;
   useEffect(()=>{
@@ -73,13 +73,16 @@ function MediaBook({project}){
     const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting){setVis(true);ob.disconnect();}},{threshold:.2});
     ob.observe(node);return()=>ob.disconnect();
   },[]);
-  useEffect(()=>()=>clearTimeout(timer.current),[]);
   const go=t=>{
     t=Math.max(0,Math.min(total-1,t));
     if(busy||t===cur)return;
     if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){setCur(t);return;}
     setAnim({dir:t>cur?'next':'prev',from:cur,to:t});
-    timer.current=setTimeout(()=>{setCur(t);setAnim(null);},920);
+  };
+  const finishTurn=()=>{
+    if(!anim)return;
+    setCur(anim.to);
+    setAnim(null);
   };
   const P=project.pages;
   const frontIdx=anim?(anim.dir==='next'?anim.from:anim.to):cur;
@@ -87,10 +90,10 @@ function MediaBook({project}){
   return <div ref={ref} className={'media-book'+(vis?' is-visible':'')}>
     <div className="book-stage">
       <button className="book-hit" onClick={()=>go(cur-1)} disabled={cur===0||busy} aria-label="上一页">‹</button>
-      <div className="book">
+      <div className={'book'+(anim?' is-turning':'')}>
         <div className="book-half book-left" aria-hidden="true"><img src={P[anim?(anim.dir==='next'?anim.from:anim.to):cur].src} alt=""/></div>
         <div className="book-half book-right"><img src={P[anim?(anim.dir==='next'?anim.to:anim.from):cur].src} alt={P[cur].name+'：'+P[cur].caption}/></div>
-        {anim&&<div className={'book-leaf book-leaf-'+anim.dir} key={anim.from+'-'+anim.to} aria-hidden="true">
+        {anim&&<div className={'book-leaf book-leaf-'+anim.dir} key={anim.from+'-'+anim.to} onAnimationEnd={event=>{if(event.target===event.currentTarget)finishTurn();}} aria-hidden="true">
           <div className="book-face"><img src={P[frontIdx].src} alt=""/></div>
           <div className="book-face book-face-back"><img src={P[backIdx].src} alt=""/></div>
         </div>}
