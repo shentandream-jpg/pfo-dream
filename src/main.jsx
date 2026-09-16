@@ -63,44 +63,96 @@ function TypeBlock({as:Tag='span',lines,speed=50,started=false,onDone}){
   </Tag>;
 }
 function MediaBook({project}){
-  const total=project.pages.length;
+  const P=project.pages;
+  // Deck uses lightweight preview derivatives; the dialog keeps full-resolution originals.
+  const pv=src=>src.replace('/portfolio/media-','/portfolio/preview/media-');
   const ref=useRef(null);
-  const [vis,setVis]=useState(false);const [cur,setCur]=useState(0);const [anim,setAnim]=useState(null);
-  const busy=anim!=null;
+  const track=useRef(null);
+  const [vis,setVis]=useState(false);
+  const [order,setOrder]=useState(()=>P.map((_,i)=>i)); // order[0] = top card
+  const [dx,setDx]=useState(0);
+  const [dragging,setDragging]=useState(false);
+  const [fly,setFly]=useState(null); // {dir,dx,idx,key}
+  const busy=!!fly;
+  const reduce=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   useEffect(()=>{
     const node=ref.current;if(!node)return;
-    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){setVis(true);return;}
+    if(reduce()){setVis(true);return;}
     const ob=new IntersectionObserver(([e])=>{if(e.isIntersecting){setVis(true);ob.disconnect();}},{threshold:.2});
     ob.observe(node);return()=>ob.disconnect();
   },[]);
-  const go=t=>{
-    t=Math.max(0,Math.min(total-1,t));
-    if(busy||t===cur)return;
-    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){setCur(t);return;}
-    setAnim({dir:t>cur?'next':'prev',from:cur,to:t});
+  useEffect(()=>{
+    document.documentElement.classList.toggle('is-page-turning',busy||dragging);
+    return()=>{document.documentElement.classList.remove('is-page-turning');};
+  },[busy,dragging]);
+  useEffect(()=>{P.forEach(p=>{const im=new Image();im.src=pv(p.src);if(im.decode)im.decode().catch(()=>{});});},[project]);
+  const throwCard=(dir,startDx=0)=>{
+    if(busy)return;
+    if(reduce()){setOrder(o=>[...o.slice(1),o[0]]);setDx(0);return;}
+    setOrder(o=>[...o.slice(1),o[0]]);
+    setFly({dir,dx:startDx,idx:order[0],key:Date.now()});
+    setDx(0);
   };
-  const finishTurn=()=>{
-    if(!anim)return;
-    setCur(anim.to);
-    setAnim(null);
+  const jumpTo=i=>{
+    if(busy)return;
+    setOrder(o=>{const k=o.indexOf(i);return k<0?o:[...o.slice(k),...o.slice(0,k)];});
   };
-  const P=project.pages;
-  const frontIdx=anim?(anim.dir==='next'?anim.from:anim.to):cur;
-  const backIdx=anim?(anim.dir==='next'?anim.to:anim.from):cur;
+  const stageW=()=>ref.current?ref.current.offsetWidth:860;
+  const onPointerDown=e=>{
+    if(busy||e.button)return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    track.current={x0:e.clientX,vx:0,lastX:e.clientX,lastT:performance.now()};
+    setDragging(true);
+  };
+  const onPointerMove=e=>{
+    const t=track.current;if(!t)return;
+    const now=performance.now(),dt=now-t.lastT;
+    if(dt>4){t.vx=.7*((e.clientX-t.lastX)/dt)+.3*t.vx;t.lastX=e.clientX;t.lastT=now;}
+    setDx(e.clientX-t.x0);
+  };
+  const onPointerUp=()=>{
+    const t=track.current;if(!t)return;
+    track.current=null;
+    setDragging(false);
+    const far=Math.abs(dx)>stageW()*.26,fast=Math.abs(t.vx)>.55;
+    if(far||fast)throwCard(dx>0?1:-1,dx);
+    else setDx(0); // spring back
+  };
+  const prog=dragging||dx?Math.min(Math.abs(dx)/(stageW()*.5),1):0;
+  const POSE=[[-2,1,0],[3.5,.955,12],[-5,.915,22],[6,.88,30]]; // [rotate, scale, offsetY] per stack position
   return <div ref={ref} className={'media-book'+(vis?' is-visible':'')}>
-    <div className="book-stage">
-      <button className="book-hit" onClick={()=>go(cur-1)} disabled={cur===0||busy} aria-label="上一页">‹</button>
-      <div className={'book'+(anim?' is-turning':'')}>
-        <div className="book-half book-left" aria-hidden="true"><img src={P[anim?(anim.dir==='next'?anim.from:anim.to):cur].src} alt=""/></div>
-        <div className="book-half book-right"><img src={P[anim?(anim.dir==='next'?anim.to:anim.from):cur].src} alt={P[cur].name+'：'+P[cur].caption}/></div>
-        {anim&&<div className={'book-leaf book-leaf-'+anim.dir} key={anim.from+'-'+anim.to} onAnimationEnd={event=>{if(event.target===event.currentTarget)finishTurn();}} aria-hidden="true">
-          <div className="book-face"><img src={P[frontIdx].src} alt=""/></div>
-          <div className="book-face book-face-back"><img src={P[backIdx].src} alt=""/></div>
+    <div className="deck-stage">
+      <button className="book-hit" onClick={()=>throwCard(-1)} disabled={busy} aria-label="扔走上一张">‹</button>
+      <div className="deck">
+        {order.map((idx,pos)=>{
+          const p=P[idx];
+          const [r0,s0,y0]=POSE[pos]||[-6,.85,34];
+          let style;
+          if(pos===0){
+            const r=Math.max(-9,Math.min(9,-2+dx*.02));
+            style={transform:'translate('+dx+'px,'+y0+'px) rotate('+r+'deg) scale(1)'};
+          }else if(pos===1){
+            style={transform:'translateY('+(12*(1-prog))+'px) rotate('+(3.5*(1-prog))+'deg) scale('+(.955+.045*prog)+')'};
+          }else{
+            style={transform:'translateY('+y0+'px) rotate('+r0+'deg) scale('+s0+')'};
+          }
+          const top=pos===0;
+          return <div key={idx} className={'deck-card '+(top?'deck-top':'deck-under deck-pos-'+pos)+(top&&dragging?' is-drag':'')} style={style}
+            onPointerDown={top?onPointerDown:undefined} onPointerMove={top?onPointerMove:undefined}
+            onPointerUp={top?onPointerUp:undefined} onPointerCancel={top?onPointerUp:undefined}
+            aria-label={top?('当前页：'+p.caption+'，可左右拖动切换'):undefined}>
+            <img src={pv(p.src)} alt={top?p.name+'：'+p.caption:''} draggable={false} loading={pos<2?'eager':'lazy'}/>
+          </div>;
+        })}
+        {fly&&<div key={fly.key} className="deck-card deck-fly" aria-hidden="true"
+          style={{'--sx':fly.dx+'px','--sr':Math.max(-9,Math.min(9,-2+fly.dx*.02))+'deg','--tx':fly.dir*(stageW()*1.3)+'px','--tr':fly.dir*18+'deg'}}
+          onAnimationEnd={e=>{if(e.target===e.currentTarget)setFly(null);}}>
+          <img src={pv(P[fly.idx].src)} alt=""/>
         </div>}
       </div>
-      <button className="book-hit" onClick={()=>go(cur+1)} disabled={cur===total-1||busy} aria-label="下一页">›</button>
+      <button className="book-hit" onClick={()=>throwCard(1)} disabled={busy} aria-label="扔走上一张">›</button>
     </div>
-    <div className="book-dots">{P.map((_,i)=><button key={i} className={'book-dot'+(i===cur?' is-active':'')} onClick={()=>go(i)} disabled={busy} aria-label={'跳到第'+(i+1)+'页'}/>)}</div>
+    <div className="book-dots">{P.map((_,i)=><button key={i} className={'book-dot'+(i===order[0]?' is-active':'')} onClick={()=>jumpTo(i)} disabled={busy} aria-label={'把第'+(i+1)+'页换到最上层'}/>)}</div>
   </div>
 }
 function App(){
@@ -183,8 +235,15 @@ function App(){
     window.addEventListener('resize',onScroll);
     return()=>{window.removeEventListener('scroll',onScroll);window.removeEventListener('resize',onScroll);if(raf)cancelAnimationFrame(raf);};
   },[]);
-  const dialog=useRef(null); const lastTrigger=useRef(null);
-  useEffect(()=>{if(project){dialog.current.showModal();} if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches&&!window.matchMedia('(pointer: coarse)').matches){document.documentElement.classList.toggle('custom-cursor-active',!project);} },[project]);
+  const lastTrigger=useRef(null);
+  const [zoom,setZoom]=useState(null);
+  useEffect(()=>{document.body.style.overflow=(project||zoom)?'hidden':'';},[project,zoom]);
+  useEffect(()=>{
+    if(!project&&!zoom)return;
+    const f=e=>{if(e.key!=='Escape')return;if(zoom)setZoom(null);else close();};
+    window.addEventListener('keydown',f);
+    return()=>window.removeEventListener('keydown',f);
+  },[project,zoom]);
   useEffect(()=>{if(!notice)return;const timer=setTimeout(()=>setNotice(''),2800);return()=>clearTimeout(timer);},[notice]);
   useEffect(()=>{
     const closeMenu=event=>{if(event.key==='Escape')setMenu(false)};
@@ -192,7 +251,7 @@ function App(){
     window.addEventListener('keydown',closeMenu);window.addEventListener('resize',resetMenu);
     return()=>{window.removeEventListener('keydown',closeMenu);window.removeEventListener('resize',resetMenu)};
   },[]);
-  function close(){dialog.current.close();setProject(null);lastTrigger.current?.focus();}
+  function close(){setProject(null);setZoom(null);lastTrigger.current?.focus();}
   async function copy(text,ok,fallback){try{await navigator.clipboard.writeText(text);setNotice(ok);}catch{setNotice(fallback);}}
   return <>
     <CursorParticles/>
@@ -210,7 +269,8 @@ function App(){
       <section className="strengths shell section" id="strengths"><div className="section-label reveal"><span>04 / MY APPROACH</span><span>能力相互连接，想法持续生长。</span></div><div className="section-heading reveal" style={{'--d':'90ms'}}><h2>不止于视觉<span className="accent">.</span></h2><p>用研究理解问题，用设计回应需求，<br/>用内容建立连接。</p></div><div className="strength-grid">{advantages.map(([n,title,en,desc,tools])=><article className="strength-card reveal" key={n} style={{'--d':((Number(n)-1)*90)+'ms'}}><div className="strength-top"><span>{n}</span><span className={'skill-symbol symbol-'+n} aria-hidden="true">{['◎','◇','↗','✳'][Number(n)-1]}</span></div><span className="eyebrow muted">{en}</span><h3>{title}</h3><p>{desc}</p><div className="tools">{tools}</div></article>)}</div></section>
       <section className="contact portfolio-ending" id="contact" aria-label="感谢观看与联系方式"><div className="ending-stage"><CoverArtwork ending onCopy={()=>copy('491134402@qq.com','邮箱已复制','请复制邮箱：491134402@qq.com')} onCopyPhone={()=>copy('18571920830','号码已复制','请复制号码：185 7192 0830')}/></div><footer className="shell"><a href="#home">沈谭梦 / SHEN TANMENG</a><span>© {new Date().getFullYear()} · Personal Design Portfolio</span><a href="#home">回到顶部 ↑</a></footer></section>
     </main>
-    <dialog ref={dialog} className="project-dialog" aria-labelledby="project-title" onCancel={e=>{e.preventDefault();close();}} onClick={e=>{if(e.target===dialog.current)close();}}>{project&&<div className="dialog-inner"><div className="dialog-toolbar"><span>{project.id} / {project.category}</span><button className="dialog-close" onClick={close} aria-label="关闭项目详情" autoFocus>关闭 ×</button></div><div className="dialog-intro"><span className="eyebrow muted">SELECTED WORK / {project.pages.length} PAGES</span><h2 id="project-title">{project.name}</h2><h3>{project.summary}</h3><p>{project.detail}</p><div className="tags">{project.tags.map(t=><span key={t}>{t}</span>)}</div></div><div className="project-gallery">{project.pages.map((page,i)=><figure key={page.number}><figcaption><span>{String(i+1).padStart(2,'0')} / {page.caption}</span><a href={page.src} target="_blank" rel="noreferrer" aria-label={'在新标签页查看'+page.caption+'原图'}>查看原图 ↗</a></figcaption><a href={page.src} target="_blank" rel="noreferrer" aria-label={'放大查看'+page.caption}><img src={page.src} alt={project.name+'：'+page.caption+'，作品集第'+page.number+'页'} loading="lazy"/></a></figure>)}</div><div className="dialog-bottom"><a href="mailto:491134402@qq.com" className="text-link">联系我，了解更多 <Arrow/></a><button onClick={close}>返回作品集 ↑</button></div></div>}</dialog>
+    {project&&<div className="project-dialog" role="dialog" aria-modal="true" aria-labelledby="project-title" onClick={e=>{if(e.target===e.currentTarget)close();}}><div className="dialog-inner"><div className="dialog-toolbar"><span>{project.id} / {project.category}</span><button className="dialog-close" onClick={close} aria-label="关闭项目详情" autoFocus>关闭 ×</button></div><div className="dialog-intro"><span className="eyebrow muted">SELECTED WORK / {project.pages.length} PAGES</span><h2 id="project-title">{project.name}</h2><h3>{project.summary}</h3><p>{project.detail}</p><div className="tags">{project.tags.map(t=><span key={t}>{t}</span>)}</div></div><div className="project-gallery">{project.pages.map((page,i)=><figure key={page.number}><figcaption><span>{String(i+1).padStart(2,'0')} / {page.caption}</span><button className="page-zoom-link" onClick={()=>setZoom(page)} aria-label={'放大查看'+page.caption+'原图'}>查看原图 ↗</button></figcaption><button className="page-zoom-thumb" onClick={()=>setZoom(page)} aria-label={'放大查看'+page.caption}><img src={page.src} alt={project.name+'：'+page.caption+'，作品集第'+page.number+'页'} loading="lazy"/></button></figure>)}</div><div className="dialog-bottom"><a href="mailto:491134402@qq.com" className="text-link">联系我，了解更多 <Arrow/></a><button onClick={close}>返回作品集 ↑</button></div></div></div>}
+    {zoom&&<div className="img-zoom" role="dialog" aria-modal="true" aria-label={'放大查看'+zoom.caption+'原图'} onClick={()=>setZoom(null)}><button className="img-zoom-back" onClick={()=>setZoom(null)} aria-label="返回项目详情">← 返回详情</button><img src={zoom.src} alt={project.name+'：'+zoom.caption} onClick={e=>e.stopPropagation()}/></div>}
     <div className="toast" role="status">{notice}</div>
   </>
 }

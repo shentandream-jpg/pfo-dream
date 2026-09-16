@@ -19,7 +19,7 @@ export default function CursorParticles() {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     document.documentElement.classList.add('custom-cursor-active');
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     let width = 0;
     let height = 0;
 
@@ -83,29 +83,35 @@ export default function CursorParticles() {
     let raf = 0;
     const tick = () => {
       ctx.clearRect(0, 0, width, height);
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.life += 1;
-        if (p.life >= p.ttl) {
-          particles.splice(i, 1);
-          continue;
+      // While the flipbook is turning, skip the particle simulation entirely so the
+      // 3D transform keeps the compositor to itself (keeps the turn smooth).
+      if (document.documentElement.classList.contains('is-page-turning')) {
+        particles.length = 0;
+      } else {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.life += 1;
+          if (p.life >= p.ttl) {
+            particles.splice(i, 1);
+            continue;
+          }
+          p.vy += 0.03;
+          p.vx *= 0.96;
+          p.vy *= 0.96;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vr;
+          const k = 1 - p.life / p.ttl;
+          const ease = k * k;
+          ctx.save();
+          ctx.globalAlpha = ease * 0.9;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          const s = p.size * (0.4 + 0.6 * ease);
+          ctx.fillRect(-s / 2, -s / 2, s, s);
+          ctx.restore();
         }
-        p.vy += 0.03;
-        p.vx *= 0.96;
-        p.vy *= 0.96;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.rot += p.vr;
-        const k = 1 - p.life / p.ttl;
-        const ease = k * k;
-        ctx.save();
-        ctx.globalAlpha = ease * 0.9;
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rot);
-        ctx.fillStyle = p.color;
-        const s = p.size * (0.4 + 0.6 * ease);
-        ctx.fillRect(-s / 2, -s / 2, s, s);
-        ctx.restore();
       }
 
       if (pointerVisible && px !== null && py !== null) {
@@ -136,7 +142,7 @@ export default function CursorParticles() {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      style={{ position: 'fixed', inset: 0, zIndex: 6, pointerEvents: 'none' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 9999, pointerEvents: 'none' }}
     />
   );
 }
