@@ -15,7 +15,7 @@ const advantages = [
 const GROUPS = [
   ['group-media','新媒体运营','NEW MEDIA OPERATIONS',['01']],
   ['group-visual','视觉设计','VISUAL DESIGN',['02','03']],
-  ['group-space','空间设计','SPACE DESIGN',['04','05','06','07']],
+  ['group-space','空间设计','SPACE DESIGN',['04','05','06','10','07']],
   ['group-service','产品设计','PRODUCT DESIGN',['08','09']],
 ];
 const TOC_COLORS = ['#5E7FA3','#C98D90','#778D72','#DDA164','#4C514D'];
